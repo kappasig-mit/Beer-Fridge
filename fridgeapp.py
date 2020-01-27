@@ -8,7 +8,7 @@ import requests
 
 pin = 6
 t = 8
-API_URL = "http://kappasigma.mit.edu/"
+API_URL = "http://localhost/beer/"
 
 
 class GUI:
@@ -222,13 +222,15 @@ class GUI:
         self.buildFrame()
         self.Initialize()
 
-    def ping(self, uri, headers):
+    def ping(self, uri, data):
         url = API_URL + uri
-        return requests.get(url, headers=headers).json()
+        response = requests.post(url, json=data)
+        print(response)
+        return response.json()
 
     def submitBeer(self, event):
         print("submitBeer")
-        headers = {"UPC": str(self.upcString), "CODE": str(self.pinID)}
+        headers = {"upc": str(self.upcString), "code": str(self.pinID)}
         response = self.ping("charge", headers)
         print(self.upcString, self.pinID, time)
         print(response)
@@ -321,13 +323,13 @@ class GUI:
                 self.d[self.current_digit].focus()
             else:
                 # Hardcoded response until endpoint is created
-                # headers = {"CODE": str(self.pinID)}
-                # response = self.ping("beerlogin", headers)
-                response = {
-                    "result": "success",
-                    "name": "Michael Kulinski",
-                    "initials": "MAK",
-                }
+                headers = {"code": str(self.pinID)}
+                response = self.ping("login", headers)
+                # response = {
+                #     "result": "success",
+                #     "name": "Michael Kulinski",
+                #     "initials": "MAK",
+                # }
 
                 self.scanPrompt.destroy()
                 nameLabel = ttk.Label(
@@ -380,10 +382,10 @@ class GUI:
             response = self.ping("add", headers)
         else:  # return name, quantity, and upc
             headers = {
-                "UPC": str(self.UPC),
-                "NAME": str(self.Beer_Type),
-                "QUANTITY": int(self.Quantity),
-                "TYPE": str(self.beer_kind.get()),
+                "upc": str(self.UPC),
+                "name": str(self.Beer_Type),
+                "quantity": int(self.Quantity),
+                "type": str(self.beer_kind.get()),
             }
             response = self.ping("add", headers)
         self.clearAll()
@@ -395,16 +397,16 @@ class GUI:
     def submitUPC(self, event):
         # ** Hardcoded result until website endpoint created **
 
-        # UPC = str(self.entry_UPC.get())
-        # headers = {"UPC": UPC}
-        # response = self.ping("upc", headers)
-        response = {
-            "result": "success",
-            "beer_id": 1,
-            "name": "Natural Light",
-            "type": "Lager",
-            "total_consumed": 420,
-        }
+        UPC = str(self.entry_UPC.get())
+        headers = {"upc": UPC}
+        response = self.ping("upc", headers)
+        # response = {
+        #     "result": "success",
+        #     "beer_id": 1,
+        #     "name": "Natural Light",
+        #     "type": "Lager",
+        #     "total_consumed": 420,
+        # }
 
         if "success" in response["result"]:
             self.BEER_ID = int(response["beer_id"])
