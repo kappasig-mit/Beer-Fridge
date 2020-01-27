@@ -4,9 +4,6 @@
 
 from tkinter import *
 import tkinter.ttk as ttk
-
-import time, json, datetime, sys
-import threading
 import requests
 
 pin = 6
@@ -22,7 +19,7 @@ class GUI:
         self.BEER_ID = None
         # self.style.theme_use('vista')
 
-        # Noteboook Frame -----------------------------------------------------------------------------------
+        # Noteboook Frame --------------------------------------------------------------
         self.notebook = ttk.Notebook(master)
         self.notebook.pack(fill=BOTH, expand=True)
         self.tab1 = ttk.Frame(self.notebook)
@@ -30,7 +27,7 @@ class GUI:
         self.notebook.add(self.tab1, text="Inventory Entry")
         self.notebook.add(self.tab2, text="Beer Checkout")
 
-        # Header Frame - Chile of Notebook Frame--------------------------------------------------------------------------------------
+        # Header Frame - Chile of Notebook Frame----------------------------------------
         self.frame_header = ttk.Frame(self.tab1)
         self.frame_header.pack(fill=BOTH, expand=True)
 
@@ -323,8 +320,14 @@ class GUI:
             if self.current_digit < 4:
                 self.d[self.current_digit].focus()
             else:
-                headers = {"CODE": str(self.pinID)}
-                response = self.ping("beerlogin", headers)
+                # Hardcoded response until endpoint is created
+                # headers = {"CODE": str(self.pinID)}
+                # response = self.ping("beerlogin", headers)
+                response = {
+                    "result": "success",
+                    "name": "Michael Kulinski",
+                    "initials": "MAK",
+                }
 
                 self.scanPrompt.destroy()
                 nameLabel = ttk.Label(
@@ -387,10 +390,22 @@ class GUI:
         self.beer_kind.set(self.kinds[0])
         self.entry_UPC.focus_set()
 
+    # Checks to see if the UPC has already existed and autofills the info
+    # If not, then user must manually enter the information
     def submitUPC(self, event):
-        UPC = str(self.entry_UPC.get())
-        headers = {"UPC": UPC}
-        response = self.ping("upc", headers)
+        # ** Hardcoded result until website endpoint created **
+
+        # UPC = str(self.entry_UPC.get())
+        # headers = {"UPC": UPC}
+        # response = self.ping("upc", headers)
+        response = {
+            "result": "success",
+            "beer_id": 1,
+            "name": "Natural Light",
+            "type": "Lager",
+            "total_consumed": 420,
+        }
+
         if "success" in response["result"]:
             self.BEER_ID = int(response["beer_id"])
             self.entry_beertype.state(["!disabled"])
