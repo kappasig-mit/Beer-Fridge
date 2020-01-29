@@ -230,7 +230,7 @@ class GUI:
 
     def submitBeer(self, event):
         print("submitBeer")
-        headers = {"upc": str(self.upcString), "brother_code": str(self.pinID)}
+        headers = {"upc": str(self.upcString), "beer_code": str(self.pinID)}
         response = self.ping("charge", headers)
         print(self.upcString, self.pinID, time)
         print(response)
@@ -323,13 +323,8 @@ class GUI:
                 self.d[self.current_digit].focus()
             else:
                 # Hardcoded response until endpoint is created
-                headers = {"brother_code": str(self.pinID)}
+                headers = {"beer_code": str(self.pinID)}
                 response = self.ping("login", headers)
-                # response = {
-                #     "result": "success",
-                #     "name": "Michael Kulinski",
-                #     "initials": "MAK",
-                # }
 
                 self.scanPrompt.destroy()
                 nameLabel = ttk.Label(
@@ -361,10 +356,10 @@ class GUI:
 
     def get_data(self):
         self.UPC = str(self.entry_UPC.get())
-        self.Beer_Type = str(self.entry_beername.get())
+        self.Beer_Name = str(self.entry_beername.get())
         self.Quantity = self.entry_quantity.get()
         print(self.UPC)
-        print(self.Beer_Type)
+        print(self.Beer_Name)
         print(self.Quantity)
 
     def clearAll(self):
@@ -372,7 +367,10 @@ class GUI:
         self.entry_beername.delete(0, "end")
         self.entry_quantity.delete(0, "end")
         self.entry_beername.state(["disabled"])
+        self.beer_kind.set(self.kinds[0])
         self.entry_UPC.focus()
+        self.notebook.unbind_all("<Return>")
+        self.notebook.bind_all("<Return>", self.submitUPC)
 
     def confirmation(self, event=None):
         self.get_data()
@@ -382,16 +380,16 @@ class GUI:
             response = self.ping("add", headers)
             print(response)
         else:  # return name, quantity, and upc
+            print(self.beer_kind.get())
             headers = {
                 "upc": str(self.UPC),
-                "name": str(self.Beer_Type),
+                "name": str(self.Beer_Name),
                 "quantity": int(self.Quantity),
-                "type": str(self.beer_kind.get()),
+                "beer_type": str(self.beer_kind.get()),
             }
             response = self.ping("add", headers)
             print(response)
         self.clearAll()
-        self.beer_kind.set(self.kinds[0])
         self.entry_UPC.focus_set()
         self.notebook.unbind_all("<Return>")
         self.notebook.bind_all("<Return>", self.submitUPC)
@@ -408,7 +406,7 @@ class GUI:
             self.entry_beername.state(["!disabled"])
             self.entry_beername.delete(0, "end")
             self.entry_beername.insert(0, response["name"])
-            self.beer_kind.set(self.kinds[self.kinds.index(response["type"])])
+            self.beer_kind.set(self.kinds[self.kinds.index(response["beer_type"])])
             self.entry_quantity.focus_set()
             self.notebook.unbind_all("<Return>")
             self.notebook.bind_all("<Return>", self.confirmation)
