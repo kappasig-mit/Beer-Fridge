@@ -74,9 +74,9 @@ class GUI:
         self.entry_UPC.grid(row=0, column=1, sticky=W)
         self.entry_UPC.state(["disabled"])
 
-        self.entry_beertype = ttk.Entry(self.frame_content, width=30, font="Arial, 15")
-        self.entry_beertype.grid(row=1, column=1, sticky=W)
-        self.entry_beertype.state(["disabled"])
+        self.entry_beername = ttk.Entry(self.frame_content, width=30, font="Arial, 15")
+        self.entry_beername.grid(row=1, column=1, sticky=W)
+        self.entry_beername.state(["disabled"])
 
         self.entry_quantity = ttk.Entry(self.frame_content, width=30, font="Arial, 15")
         self.entry_quantity.grid(row=3, column=1, sticky=W)
@@ -212,7 +212,7 @@ class GUI:
         )
         self.begin_inventory.grid(row=2, column=1)
         self.entry_UPC.state(["disabled"])
-        self.entry_beertype.state(["disabled"])
+        self.entry_beername.state(["disabled"])
         self.entry_quantity.state(["disabled"])
         print("Initialize")
 
@@ -230,7 +230,7 @@ class GUI:
 
     def submitBeer(self, event):
         print("submitBeer")
-        headers = {"upc": str(self.upcString), "code": str(self.pinID)}
+        headers = {"upc": str(self.upcString), "brother_code": str(self.pinID)}
         response = self.ping("charge", headers)
         print(self.upcString, self.pinID, time)
         print(response)
@@ -323,7 +323,7 @@ class GUI:
                 self.d[self.current_digit].focus()
             else:
                 # Hardcoded response until endpoint is created
-                headers = {"code": str(self.pinID)}
+                headers = {"brother_code": str(self.pinID)}
                 response = self.ping("login", headers)
                 # response = {
                 #     "result": "success",
@@ -361,7 +361,7 @@ class GUI:
 
     def get_data(self):
         self.UPC = str(self.entry_UPC.get())
-        self.Beer_Type = str(self.entry_beertype.get())
+        self.Beer_Type = str(self.entry_beername.get())
         self.Quantity = self.entry_quantity.get()
         print(self.UPC)
         print(self.Beer_Type)
@@ -369,17 +369,18 @@ class GUI:
 
     def clearAll(self):
         self.entry_UPC.delete(0, "end")
-        self.entry_beertype.delete(0, "end")
+        self.entry_beername.delete(0, "end")
         self.entry_quantity.delete(0, "end")
-        self.entry_beertype.state(["disabled"])
+        self.entry_beername.state(["disabled"])
         self.entry_UPC.focus()
 
-    def confirmation(self):
+    def confirmation(self, event=None):
         self.get_data()
 
         if self.BEER_ID is not None:  # return beer id and quantity
-            headers = {"ID": self.BEER_ID, "QUANTITY": int(self.Quantity)}
+            headers = {"beer_id": self.BEER_ID, "quantity": int(self.Quantity)}
             response = self.ping("add", headers)
+            print(response)
         else:  # return name, quantity, and upc
             headers = {
                 "upc": str(self.UPC),
@@ -388,37 +389,36 @@ class GUI:
                 "type": str(self.beer_kind.get()),
             }
             response = self.ping("add", headers)
+            print(response)
         self.clearAll()
         self.beer_kind.set(self.kinds[0])
         self.entry_UPC.focus_set()
+        self.notebook.unbind_all("<Return>")
+        self.notebook.bind_all("<Return>", self.submitUPC)
 
     # Checks to see if the UPC has already existed and autofills the info
     # If not, then user must manually enter the information
     def submitUPC(self, event):
-        # ** Hardcoded result until website endpoint created **
-
         UPC = str(self.entry_UPC.get())
         headers = {"upc": UPC}
         response = self.ping("upc", headers)
-        # response = {
-        #     "result": "success",
-        #     "beer_id": 1,
-        #     "name": "Natural Light",
-        #     "type": "Lager",
-        #     "total_consumed": 420,
-        # }
 
         if "success" in response["result"]:
             self.BEER_ID = int(response["beer_id"])
-            self.entry_beertype.state(["!disabled"])
-            self.entry_beertype.insert(0, response["name"])
+            self.entry_beername.state(["!disabled"])
+            self.entry_beername.delete(0, "end")
+            self.entry_beername.insert(0, response["name"])
             self.beer_kind.set(self.kinds[self.kinds.index(response["type"])])
             self.entry_quantity.focus_set()
+            self.notebook.unbind_all("<Return>")
+            self.notebook.bind_all("<Return>", self.confirmation)
 
         else:
             self.BEER_ID = None
-            self.entry_beertype.state(["!disabled"])
-            self.entry_beertype.focus_set()
+            self.entry_beername.state(["!disabled"])
+            self.entry_beername.focus_set()
+            self.notebook.unbind_all("<Return>")
+            self.notebook.bind_all("<Return>", self.confirmation)
 
     def start_inventory(self):
         self.begin_inventory.destroy()
@@ -431,7 +431,7 @@ class GUI:
         self.buildFrame()
         self.notebook.unbind_all("<Key>")
         self.notebook.unbind_all("BackSpace")
-        self.notebook.unbind_all("Return")
+        self.notebook.unbind_all("<Return>")
         self.notebook.bind_all("<Return>", self.submitUPC)
         self.entry_UPC.state(["!disabled"])
         self.entry_UPC.focus_set()
