@@ -5,12 +5,12 @@
 from tkinter import *
 import tkinter.ttk as ttk
 import requests
-import time
+from datetime import datetime
 
 pin = 6
 t = 8
-# API_URL = "http://localhost/beer/"
-API_URL = "http://18.21.207.103/beer/"
+#API_URL = "http://localhost/beer/"
+API_URL = "http://18.21.207.103:80/beer/"
 
 
 class GUI:
@@ -234,7 +234,7 @@ class GUI:
         print("submitBeer")
         headers = {"upc": str(self.upcString), "beer_code": str(self.pinID)}
         response = self.ping("charge", headers)
-        print(self.upcString, self.pinID, time)
+        print(self.upcString, self.pinID, datetime.now())
         print(response)
 
         if "failure" in response["result"]:
