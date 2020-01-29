@@ -5,10 +5,12 @@
 from tkinter import *
 import tkinter.ttk as ttk
 import requests
+import time
 
 pin = 6
 t = 8
-API_URL = "http://localhost/beer/"
+# API_URL = "http://localhost/beer/"
+API_URL = "http://18.21.207.103/beer/"
 
 
 class GUI:
