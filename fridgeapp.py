@@ -5,11 +5,8 @@
 from tkinter import *
 import tkinter.ttk as ttk
 import requests
-from datetime import datetime
 import enum
 
-pin = 6
-t = 8
 # API_URL = "http://localhost/beer/"
 API_URL = "http://18.21.207.103:80/beer/"
 
@@ -66,7 +63,7 @@ class GUI:
         self.create_checkin_frame()
         self.create_checkout_frame()
 
-    # ---------------------     Checkin Frame -----------------------
+    # ---------------------  Checkin Frame -----------------------
 
     def create_checkin_frame(self):
         self.BEER_ID = None
@@ -173,7 +170,7 @@ class GUI:
         self.start_checkout_button = ttk.Button(
             self.frame_checkout_header,
             text="Begin Scanning Beers",
-            command=self.initialize,
+            command=self.start_checkout,
         )
         self.start_checkout_button.grid(row=4, column=3, pady=30)
 
@@ -305,7 +302,7 @@ class GUI:
         self.start_checkout_button = ttk.Button(
             self.frame_checkout_header,
             text="Begin Scanning Beers",
-            command=self.initialize,
+            command=self.start_checkout,
         )
         self.start_checkout_button.grid(row=4, column=3, pady=30)
 
@@ -356,20 +353,15 @@ class GUI:
             self.pin_entry3,
             self.pin_entry4,
         ]
-        self.current_digit = 0
-        self.pin_id = ""
-        self.upc_string = ""
-        self.initials = ""
-        self.count = 3
-        self.checked_beers = []
-        self.quantity = []
 
-    def initialize(self):
+        self.disable_checkout_objects()
+
+    def start_checkout(self):
+        # Remove checkout button
         self.start_checkout_button.destroy()
-        self.notebook.bind_all("<Key>", self.keypress)
-        self.notebook.bind_all("<KP_Decimal>", self.Exit)
-        self.notebook.bind_all("<KP_Enter>", self.Exit)
-        self.current_digit = 0
+        self.enable_checkout_objects()
+
+        # Refresh checkin frame
         self.start_checkin_button.destroy()
         self.start_checkin_button = ttk.Button(
             self.frame_checkin_header,
@@ -377,84 +369,32 @@ class GUI:
             command=self.start_checkin,
         )
         self.start_checkin_button.grid(row=2, column=1)
-        self.entry_UPC.state(["disabled"])
-        self.entry_beer_name.state(["disabled"])
-        self.entry_quantity.state(["disabled"])
-        print("initialize")
+        self.disable_checkin_objects()
 
-    def Exit(self, event):
-        print("Exit")
+        # Key bindings and focus
+        self.notebook.bind_all("<Key>", self.keypress)
+        self.notebook.bind_all("<KP_Decimal>", self.restart_checkout)
+        self.notebook.bind_all("<KP_Enter>", self.restart_checkout)
+
+        self.current_digit = 0
+        self.beer_code = ""
+        self.upc_string = ""
+        self.initials = ""
+        self.checked_beers = {}
+
+    def enable_checkout_objects(self):
+        for pin in self.pin_entries:
+            pin.state(["!disabled"])
+
+    def disable_checkout_objects(self):
+        for pin in self.pin_entries:
+            pin.state(["disabled"])
+
+    def restart_checkout(self, event):
+        print("Restarting Checkout")
         self.frame_checkout_header.destroy()
         self.create_checkout_frame()
-        self.initialize()
-
-    def submitBeer(self, event):
-        print("submitBeer")
-        headers = {"upc": str(self.upc_string), "beer_code": str(self.pin_id)}
-        response = send_request("checkout", headers)
-
-        if "failure" in response["result"]:
-            print("FAILURE DETECTED")
-            print("upc string: " + self.upc_string)
-
-        else:
-            if self.upc_string in self.checked_beers:
-                self.quantity[self.checked_beers.index(self.upc_string)] += 1
-                self.beer = ttk.Label(
-                    self.frame_checkout_header,
-                    text=str(self.quantity[self.checked_beers.index(self.upc_string)])
-                    + ": "
-                    + response["name"],
-                    font="Arial 18",
-                    justify="center",
-                )
-
-                if self.checked_beers.index(self.upc_string) < 4:
-                    self.beer.grid(
-                        row=self.checked_beers.index(self.upc_string) + 3, column=2
-                    )
-
-                else:
-                    self.beer.grid(
-                        row=self.checked_beers.index(self.upc_string) - 1, column=3
-                    )
-
-            else:
-                print("Appending")
-                self.checked_beers.append(self.upc_string)
-                self.quantity.append(1)
-                self.beer = ttk.Label(
-                    self.frame_checkout_header,
-                    text=str(self.quantity[self.checked_beers.index(self.upc_string)])
-                    + ": "
-                    + response["name"],
-                    font="Arial 18",
-                    justify="center",
-                )
-                if self.checked_beers.index(self.upc_string) < 4:
-                    self.beer.grid(row=self.count, column=2)
-
-                else:
-                    self.beer.grid(row=self.count - 4, column=3)
-
-                self.count += 1
-
-            self.exit_prompt.destroy
-            self.exit_prompt.grid(row=self.count + 1, column=2, stick=S, pady=5)
-            print("Quantity: ", self.quantity)
-            print("Checked beers: ", self.checked_beers)
-
-        self.upc_string = ""
-
-    def scanMode(self, event):
-        print("scanMode")
-        x = event.char
-        self.notebook.unbind_all("<Return>")
-        self.notebook.bind_all("<Return>", self.submitBeer)
-        if x in ("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"):
-            self.upc_string += x
-            print(x)
-            print("String: ", self.upc_string)
+        self.start_checkout()
 
     def keypress(self, event):
         print("keypress")
@@ -475,11 +415,11 @@ class GUI:
             self.pin_entries[self.current_digit].delete(0, END)
             self.pin_entries[self.current_digit].insert(0, " " + x[3])
             self.current_digit += 1
-            self.pin_id += x[3]
+            self.beer_code += x[3]
             if self.current_digit < 4:
                 self.pin_entries[self.current_digit].focus()
             else:
-                headers = {"beer_code": str(self.pin_id)}
+                headers = {"beer_code": str(self.beer_code)}
                 response = send_request("login", headers)
 
                 self.scan_prompt.destroy()
@@ -490,8 +430,7 @@ class GUI:
                     justify="center",
                 )
                 nameLabel.grid(row=2, column=2, columnspan=4, stick=S, pady=50, padx=30)
-                print(response)
-                print(self.pin_id)
+
                 self.pin_entry1.destroy()
                 self.pin_entry2.destroy()
                 self.pin_entry3.destroy()
@@ -500,22 +439,88 @@ class GUI:
                 print("Pin Destroy")
 
                 self.notebook.unbind_all("<Key>")
-                self.notebook.bind_all("<Key>", self.scanMode)
+                self.notebook.bind_all("<Key>", self.scan_mode)
 
-                beerLabel = ttk.Label(
+                beer_label = ttk.Label(
                     self.frame_checkout_header,
                     text="Beers: ",
                     font="Arial 22",
                     justify="center",
                 )
-                beerLabel.grid(row=3, column=0, stick=N)
+                beer_label.grid(row=3, column=0, stick=N)
+
+    def scan_mode(self, event):
+        print("Scan Mode")
+        x = event.char
+        self.notebook.unbind_all("<Return>")
+        self.notebook.bind_all("<Return>", self.submit_beer)
+        if x in ("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"):
+            self.upc_string += x
+
+    def submit_beer(self, event):
+        print("Submitting Beer")
+        headers = {"upc": str(self.upc_string), "beer_code": str(self.beer_code)}
+        response = send_request("checkout", headers)
+
+        if "failure" in response["result"]:
+            print("FAILURE DETECTED")
+            print("upc string: " + self.upc_string)
+
+        else:
+            if self.upc_string in self.checked_beers:
+                self.checked_beers[self.upc_string] += 1
+                self.beer = ttk.Label(
+                    self.frame_checkout_header,
+                    text=f"{self.checked_beers[self.upc_string]}: {response['name']}",
+                    font="Arial 18",
+                    justify="center",
+                )
+
+                # if self.checked_beers.index(self.upc_string) < 4:
+                #     self.beer.grid(
+                #         row=self.checked_beers.index(self.upc_string) + 3, column=2
+                #     )
+
+                # else:
+                #     self.beer.grid(
+                #         row=self.checked_beers.index(self.upc_string) - 1, column=3
+                #     )
+
+            else:
+                print("Appending")
+                self.checked_beers[self.upc_string] = 1
+                self.beer = ttk.Label(
+                    self.frame_checkout_header,
+                    text=f"{self.checked_beers[self.upc_string]}: {response['name']}",
+                    font="Arial 18",
+                    justify="center",
+                )
+
+                if len(self.checked_beers) < 4:
+                    self.beer.grid(row=len(self.checked_beers) + 3, column=2)
+                else:
+                    self.beer.grid(row=len(self.checked_beers) - 4, column=3)
+                # if self.checked_beers.index(self.upc_string) < 4:
+                #     self.beer.grid(row=self.count, column=2)
+
+                # else:
+                #     self.beer.grid(row=self.count - 4, column=3)
+
+            self.exit_prompt.destroy()
+            self.exit_prompt.grid(
+                row=len(self.checked_beers) + 4, column=2, stick=S, pady=5
+            )
+            print("Quantity: ", self.quantity)
+            print("Checked beers: ", self.checked_beers)
+
+        self.upc_string = ""
 
 
 # --------------------------------------------------------------------------------------------------
 def main():
     root = Tk()
     root.attributes("-fullscreen", True)
-    gui = GUI(root)
+    GUI(root)
     root.mainloop()
 
 
