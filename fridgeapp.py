@@ -507,6 +507,12 @@ class GUI:
                 #     self.beer.grid(row=self.count - 4, column=3)
 
             self.exit_prompt.destroy()
+            self.exit_prompt = ttk.Label(
+                self.frame_checkout_header,
+                text="Press Delete or Enter to Exit/Restart: ",
+                font="Arial 12",
+                justify="center",
+            )
             self.exit_prompt.grid(
                 row=len(self.checked_beers) + 4, column=2, stick=S, pady=5
             )
