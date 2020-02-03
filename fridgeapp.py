@@ -6,6 +6,7 @@ from tkinter import *
 import tkinter.ttk as ttk
 import requests
 import enum
+from recordtype import recordtype
 
 # API_URL = "http://localhost/beer/"
 API_URL = "http://18.21.207.103:80/beer/"
@@ -33,6 +34,9 @@ class BeerType(enum.Enum):
     @staticmethod
     def get_values():
         return list(map(lambda t: t.value, BeerType))
+
+
+BeerCheckout = recordtype("BeerCheckout", "index quantity")
 
 
 def send_request(uri, data):
@@ -468,43 +472,40 @@ class GUI:
 
         else:
             if self.upc_string in self.checked_beers:
-                self.checked_beers[self.upc_string] += 1
+                self.checked_beers[self.upc_string].quantity += 1
                 self.beer = ttk.Label(
                     self.frame_checkout_header,
-                    text=f"{self.checked_beers[self.upc_string]}: {response['name']}",
+                    text=f"{self.checked_beers[self.upc_string].quantity}: {response['name']}",
                     font="Arial 18",
                     justify="center",
                 )
 
-                # if self.checked_beers.index(self.upc_string) < 4:
-                #     self.beer.grid(
-                #         row=self.checked_beers.index(self.upc_string) + 3, column=2
-                #     )
+                if self.checked_beers[self.upc_string].index < 4:
+                    self.beer.grid(
+                        row=self.checked_beers[self.upc_string].index + 3, column=2
+                    )
 
-                # else:
-                #     self.beer.grid(
-                #         row=self.checked_beers.index(self.upc_string) - 1, column=3
-                #     )
+                else:
+                    self.beer.grid(
+                        row=self.checked_beers[self.upc_string].index - 1, column=3
+                    )
 
             else:
                 print("Appending")
-                self.checked_beers[self.upc_string] = 1
+                self.checked_beers[self.upc_string] = BeerCheckout(
+                    amount=1, index=len(self.checked_beers)
+                )
                 self.beer = ttk.Label(
                     self.frame_checkout_header,
-                    text=f"{self.checked_beers[self.upc_string]}: {response['name']}",
+                    text=f"{self.checked_beers[self.upc_string].amount}: {response['name']}",
                     font="Arial 18",
                     justify="center",
                 )
 
-                if len(self.checked_beers) < 4:
+                if self.checked_beers[self.upc_string].index < 4:
                     self.beer.grid(row=len(self.checked_beers) + 3, column=2)
                 else:
-                    self.beer.grid(row=len(self.checked_beers) - 4, column=3)
-                # if self.checked_beers.index(self.upc_string) < 4:
-                #     self.beer.grid(row=self.count, column=2)
-
-                # else:
-                #     self.beer.grid(row=self.count - 4, column=3)
+                    self.beer.grid(row=len(self.checked_beers) - 1, column=3)
 
             self.exit_prompt.destroy()
             self.exit_prompt = ttk.Label(
@@ -516,7 +517,6 @@ class GUI:
             self.exit_prompt.grid(
                 row=len(self.checked_beers) + 4, column=2, stick=S, pady=5
             )
-            print("Quantity: ", self.quantity)
             print("Checked beers: ", self.checked_beers)
 
         self.upc_string = ""
