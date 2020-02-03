@@ -493,19 +493,19 @@ class GUI:
             else:
                 print("Appending")
                 self.checked_beers[self.upc_string] = BeerCheckout(
-                    amount=1, index=len(self.checked_beers)
+                    quantity=1, index=len(self.checked_beers)
                 )
                 self.beer = ttk.Label(
                     self.frame_checkout_header,
-                    text=f"{self.checked_beers[self.upc_string].amount}: {response['name']}",
+                    text=f"{self.checked_beers[self.upc_string].quantity}: {response['name']}",
                     font="Arial 18",
                     justify="center",
                 )
 
                 if self.checked_beers[self.upc_string].index < 4:
-                    self.beer.grid(row=len(self.checked_beers) + 3, column=2)
+                    self.beer.grid(row=len(self.checked_beers) + 2, column=2)
                 else:
-                    self.beer.grid(row=len(self.checked_beers) - 1, column=3)
+                    self.beer.grid(row=len(self.checked_beers) - 2, column=3)
 
             self.exit_prompt.destroy()
             self.exit_prompt = ttk.Label(
